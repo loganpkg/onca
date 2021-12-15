@@ -14,7 +14,8 @@
 ; OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 ;
 
-; bootloader.asm: Bootloader for CebolaOS.
+; bootloader1.asm: Stage 1 bootloader for CebolaOS.
+;                  This primarily loads the stage 2 bootloader.
 
 ; 16-bit 8086 BIOS Assembly in real mode.
 [bits 16]
@@ -46,9 +47,8 @@ mov ah, 0 ; Set video mode.
 mov al, 0x03 ; Text mode 80 by 25.
 int 0x10
 
-call a16_newline_cursor
-call a16_newline_cursor
-call a16_newline_cursor
+mov bx, STAGE1_BL_STR
+call a16_print_str
 call a16_newline_cursor
 
 mov bx, WELCOME_STR
@@ -79,7 +79,39 @@ mov bx, INT_13H_SUPPORT_STR
 call a16_print_str
 call a16_newline_cursor
 
+; Load stage 2 bootloader file, which is the 5 sectors commencing from the
+; second sector on disk.
+mov ah, 0x42 ; Extended read.
+mov dl, [drive_index]
+; Fill in the Disk Address Packet (DAP).
+mov byte[DAP], 0x10 ; Size of DAP (16 bytes).
+mov byte[DAP + 1], 0 ; Unused.
+mov byte[DAP + 2], 5 ; Number of sectors to read.
+mov word[DAP + 4], 0x7e00 ; Memory buffer address offset.
+mov word[DAP + 6], 0 ; Memory buffer address segment.
+; LBA of 1 (second sector) using an 8 byte value.
+; Due to little-endian, set the lower dword to 1.
+mov dword[DAP + 8], 1
+mov dword[DAP + 0xc], 0
+mov si, DAP ; Pass the address of the DAP as a parameter.
+int 0x13
+jc read_error ; The read failed.
+
+mov bx, READ_LOADER_OK_STR
+call a16_print_str
+call a16_newline_cursor
+
+; Set again in case dl has been used.
+mov dl, [drive_index]
+jmp 0x7e00 ; Jump to where the loader file was read into memory.
+
+read_error:
 no_int_13h_support:
+
+mov bx, BOOTLOADER_ERR_STR
+call a16_print_str
+call a16_newline_cursor
+
 stop:
     hlt
     jmp stop ; Jump forever.
@@ -87,6 +119,9 @@ stop:
 %include "lib16.asm" ; Include the 16-bit library.
 
 ; Note that the strings are NULL (zero) terminated.
+STAGE1_BL_STR:
+    db "In stage 1 bootloader", 0
+
 WELCOME_STR:
     db "Welcome to CebolaOS", 0
 
@@ -99,8 +134,18 @@ LICENSE_STR:
 INT_13H_SUPPORT_STR:
     db "INT 13h extension functions OK", 0
 
+READ_LOADER_OK_STR:
+    db "Read of stage 2 bootloader OK", 0
+
+BOOTLOADER_ERR_STR:
+    db "Stage 1 bootloader Error", 0
+
 drive_index:
     db 0
+
+; Disk Address Packet (DAP) used for extended read function.
+DAP:
+    times 16 db 0
 
 %include "mbr_partition_table.asm"
 

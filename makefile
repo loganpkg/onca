@@ -1,5 +1,3 @@
-#!/bin/sh
-
 #
 # Copyright (c) 2021 Logan Ryan McLintock
 #
@@ -16,6 +14,14 @@
 # OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #
 
-rm -rf boot.img.lock
-nasm -f bin -o bootloader.bin bootloader.asm && \
-    dd if=bootloader.bin of=boot.img bs=512 count=1 conv=notrunc
+.PHONY: all
+all:
+	rm -rf boot.img.lock && \
+	nasm -f bin -o bootloader1.bin bootloader1.asm && \
+    dd if=bootloader1.bin of=boot.img bs=512 count=1 conv=notrunc && \
+	nasm -f bin -o bootloader2.bin bootloader2.asm && \
+    dd if=bootloader2.bin of=boot.img bs=512 seek=1 count=5 conv=notrunc
+
+.PHONY: clean
+clean:
+	rm -rf *.bin

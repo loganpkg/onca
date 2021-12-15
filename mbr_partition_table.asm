@@ -64,7 +64,7 @@ dd 1 ; Four bytes.
 ; Disk size in sectors = Num_C * H_per_C * S_per_T.
 ; H_per_C = 16, S_per_T = 63.
 ; The minus one is to account for the MBR.
-dd (20 * 16 * 63 - 1) ; Four bytes.
+dd 20 * 16 * 63 - 1 ; Four bytes.
 
 ; Zero the unused partition enties with 16 bytes.
 ; Partition Entry number 2:

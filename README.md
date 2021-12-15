@@ -52,6 +52,14 @@ References
 
 * INT 13H, Wikipedia, https://en.wikipedia.org/wiki/INT_13H#
 
+* Bootloader, OSDev Wiki, https://wiki.osdev.org/Bootloader
+
+* Setting Up Long Mode, OSDev Wiki, https://wiki.osdev.org/Setting_Up_Long_Mode
+
+* FLAGS register, Wikipedia, https://en.wikipedia.org/wiki/FLAGS_register
+
+* X86 Opcode and Instruction Reference Home,
+  http://ref.x86asm.net/coder32.html#x66
 
 BIOS settings
 -------------
