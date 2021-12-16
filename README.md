@@ -61,6 +61,9 @@ References
 * X86 Opcode and Instruction Reference Home,
   http://ref.x86asm.net/coder32.html#x66
 
+* TEST (x86 instruction), Wikipedia,
+  https://en.wikipedia.org/wiki/TEST_(x86_instruction)
+
 BIOS settings
 -------------
 
