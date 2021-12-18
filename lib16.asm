@@ -51,3 +51,20 @@ a16_newline_cursor:
     int 0x10
     popa ; Restore registers.
     ret ; Return to after the call.
+
+a16_print_hex_mem:
+    ; Function that prints memory bytes as hexadecimal.
+    ; Will always be little-endian.
+    ; Start of memory address is stored in register bx.
+    ; Number of bytes (size) is stored in cx.
+    pusha ; Backup registers.
+    mov ah, 0x0e ; teletype output.
+    .start:
+    ; UP TO HERE
+    mov al, [bx] ; Prepare the value stored at bx for printing.
+    int 0x10 ; Interrupt. This will cause the print to occur on the screen.
+    inc bx
+    dec cx ; Decrement the number of bytes.
+    jnz .start ; Jump if not zero to the start of the loop.
+    popa ; Restore registers.
+    ret ; Return to after the call.

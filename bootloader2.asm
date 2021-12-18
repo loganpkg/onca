@@ -116,10 +116,77 @@ mov bx, GiB_PAGES_STR
 call a16_print_str
 call a16_newline_cursor
 
+; Load kernel file into memory address 0x10000, which is the 100 sectors
+; commencing from the 7th sector on disk.
+mov ah, 0x42 ; Extended read.
+mov dl, [drive_index]
+; Fill in the Disk Address Packet (DAP).
+mov byte[DAP], 0x10 ; Size of DAP (16 bytes).
+mov byte[DAP + 1], 0 ; Unused.
+mov byte[DAP + 2], 100 ; Number of sectors to read.
+; Physical address = 0x10000 = 0x1000 * 16 + 0
+mov word[DAP + 4], 0 ; Memory buffer address offset.
+mov word[DAP + 6], 0x1000 ; Memory buffer address segment.
+; LBA of 6 (7th sector) using an 8 byte value.
+; Due to little-endian, set the lower dword.
+mov dword[DAP + 8], 6
+mov dword[DAP + 0xc], 0
+mov si, DAP ; Pass the address of the DAP as a parameter.
+int 0x13
+jc read_error ; The read failed.
+
+mov bx, READ_KERNEL_OK_STR
+call a16_print_str
+call a16_newline_cursor
+
+; Store memory map.
+; S -> 0x53
+; M -> 0x4d
+; A -> 0x41
+; P -> 0x50
+
+; First block.
+mov eax, 0xe820 ; Function code: Query address map.
+xor ebx, ebx ; Set to zero. Do not change between calls.
+mov di, 0x9000 ; Start of memory buffer where results will be stored.
+mov ecx, 20 ; Buffer size. Do not need the extended attributes.
+mov edx, 0x534d4150 ; "SMAP" in big-endian.
+int 0x15 ; Interrupt.
+; Carry flag set means there was an error. There should be at least one entry,
+; so this would indicate no support for this function.
+jc address_map_error
+cmp eax, 0x534d4150 ; "SMAP" should be returned into eax.
+jne address_map_error ; Jump if not equal.
+
+subsequent_block:
+    mov eax, 0xe820 ; Reset: Function code: Query address map.
+    ; ebx: Do not change this continuation value between calls.
+    add di, 20 ; Increase memory buffer.
+    mov ecx, 20 ; Reset: Buffer size. Do not need the extended attributes.
+    mov edx, 0x534d4150 ; Reset: "SMAP" in big-endian.
+    int 0x15 ; Interrupt.
+    jc address_map_error ; Carry flag set means there was an error.
+    cmp eax, 0x534d4150 ; "SMAP" should be returned into eax.
+    jne address_map_error ; Jump if not equal.
+    test ebx, ebx
+    jnz subsequent_block ; Jump if not zero, as the list continues.
+    ; Zero indicates the end of the list.
+
+mov bx, MEM_MAP_OK_STR
+call a16_print_str
+call a16_newline_cursor
+
+address_map_error:
+read_error:
 no_GiB_pages:
 no_long_mode:
 no_ext_leaf:
 no_cpuid_support:
+
+mov bx, BL2_ERR_STR
+call a16_print_str
+call a16_newline_cursor
+
 stop:
     hlt
     jmp stop ; Jump forever.
@@ -139,10 +206,24 @@ LONG_MODE_STR:
 GiB_PAGES_STR:
     db "GiB pages support OK", 0
 
+BL2_ERR_STR:
+    db "Stage 2 bootloader ERROR", 0
+
+READ_KERNEL_OK_STR:
+    db "Read kernel OK", 0
+
+MEM_MAP_OK_STR:
+    db "Memory map read OK", 0
+
 drive_index:
     db 0
 
 man_id:
     times 13 db 0 ; Add one for the zero termination of the string.
+
+; Disk Address Packet (DAP) used for extended read function.
+DAP:
+    times 16 db 0
+
 
 %include "lib16.asm" ; Include the 16-bit library.

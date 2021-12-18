@@ -80,7 +80,7 @@ call a16_print_str
 call a16_newline_cursor
 
 ; Load stage 2 bootloader file, which is the 5 sectors commencing from the
-; second sector on disk.
+; 2nd sector on disk.
 mov ah, 0x42 ; Extended read.
 mov dl, [drive_index]
 ; Fill in the Disk Address Packet (DAP).
@@ -108,7 +108,7 @@ jmp 0x7e00 ; Jump to where the loader file was read into memory.
 read_error:
 no_int_13h_support:
 
-mov bx, BOOTLOADER_ERR_STR
+mov bx, BL1_ERR_STR
 call a16_print_str
 call a16_newline_cursor
 
@@ -137,8 +137,8 @@ INT_13H_SUPPORT_STR:
 READ_LOADER_OK_STR:
     db "Read of stage 2 bootloader OK", 0
 
-BOOTLOADER_ERR_STR:
-    db "Stage 1 bootloader Error", 0
+BL1_ERR_STR:
+    db "Stage 1 bootloader ERROR", 0
 
 drive_index:
     db 0
