@@ -14,9 +14,9 @@
 ; OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 ;
 
-; bootloader2.asm: Stage 2 bootloader for CebolaOS.
-;                  This is loaded by the stage 1 bootloader.
-;                  This boots the kernel.
+; bootloader2.asm -- Stage 2 bootloader for CebolaOS.
+;                    This is loaded by the stage 1 bootloader.
+;                    This boots the kernel.
 
 ; 16-bit 8086 BIOS Assembly in real mode.
 [bits 16]
@@ -30,28 +30,27 @@ mov [drive_index], dl
 
 mov bx, IN_LOADER_STR
 call a16_print_str
-call a16_newline_cursor
 
 ; Check for CPUID capability. If can flip bit 21 of EFLAGS, then has
 ; CPUID support. Push EFLAGS to the stack, change it, then pop it back.
 ; Push flags as a double word (4 bytes) to the stack.
 pushfd
 ; Can use 32-bit registers in real mode (16-bit). This will pop 4 bytes.
-; If you run:
+; If you run
 ; $ nasm -f bin -o test.bin test.asm
 ; $ hexdump -C test.bin
-; on this line, you will see:
+; on this line, you will see
 ; 66 58
 ; The opcode 66 is the precision-size override prefix. This lets the operation
 ; run in 32-bits even when in 16-bit real mode.
 pop eax
-; Likewise, if you run nasm and hexdump on this line, you will see:
+; Likewise, if you run nasm and hexdump on this line, you will see
 ; 66 35 00 00 20 00
-; This means:
+; This means
 ; 66 -> precision-size override prefix
 ; 35 -> xor eax
 ; 00 00 20 00 -> little-endian. In big-endian this is 0x00200000 which in
-; binary is:
+; binary is
 ; 00000000001000000000000000000000
 ;           ^                    ^
 ;           |                    |
@@ -68,8 +67,6 @@ je no_cpuid_support ; Jump if equal.
 
 mov bx, CPUID_SUPPORT_STR
 call a16_print_str
-call a16_newline_cursor
-
 
 ; Print CPU Manufacturer Id.
 mov eax, 0 ; Leaf 0.
@@ -86,8 +83,9 @@ call a16_print_str
 
 mov bx, man_id
 call a16_print_str
-call a16_newline_cursor
 
+mov bx, NEWLINE_STR
+call a16_print_str
 
 ; Determine the highest extended leaf of cpuid. Will be returned in eax.
 mov eax, 0x80000000 ; Leaf to determine the highest extended leaf.
@@ -106,7 +104,6 @@ jz no_long_mode ; Jump if zero.
 
 mov bx, LONG_MODE_STR
 call a16_print_str
-call a16_newline_cursor
 
 ; Test for Gigabyte pages. The value in edx should be OK to reuse.
 test edx, 1 << 26
@@ -114,7 +111,6 @@ jz no_GiB_pages
 
 mov bx, GiB_PAGES_STR
 call a16_print_str
-call a16_newline_cursor
 
 ; Load kernel file into memory address 0x10000, which is the 100 sectors
 ; commencing from the 7th sector on disk.
@@ -137,7 +133,6 @@ jc read_error ; The read failed.
 
 mov bx, READ_KERNEL_OK_STR
 call a16_print_str
-call a16_newline_cursor
 
 ; Store memory map.
 ; S -> 0x53
@@ -146,9 +141,9 @@ call a16_newline_cursor
 ; P -> 0x50
 
 ; First block.
-mov eax, 0xe820 ; Function code: Query address map.
+mov eax, 0xe820 ; Function code -- Query address map.
 xor ebx, ebx ; Set to zero. Do not change between calls.
-mov di, 0x9000 ; Start of memory buffer where results will be stored.
+mov di, [mem_map]
 mov ecx, 20 ; Buffer size. Do not need the extended attributes.
 mov edx, 0x534d4150 ; "SMAP" in big-endian.
 int 0x15 ; Interrupt.
@@ -157,24 +152,79 @@ int 0x15 ; Interrupt.
 jc address_map_error
 cmp eax, 0x534d4150 ; "SMAP" should be returned into eax.
 jne address_map_error ; Jump if not equal.
+add di, 20 ; Advance memory buffer.
 
 subsequent_block:
-    mov eax, 0xe820 ; Reset: Function code: Query address map.
-    ; ebx: Do not change this continuation value between calls.
-    add di, 20 ; Increase memory buffer.
-    mov ecx, 20 ; Reset: Buffer size. Do not need the extended attributes.
-    mov edx, 0x534d4150 ; Reset: "SMAP" in big-endian.
+    mov eax, 0xe820 ; Reset -- Function code -- Query address map.
+    ; ebx -- Do not change this continuation value between calls.
+    mov ecx, 20 ; Reset -- Buffer size. Do not need the extended attributes.
+    mov edx, 0x534d4150 ; Reset -- "SMAP" in big-endian.
     int 0x15 ; Interrupt.
     jc address_map_error ; Carry flag set means there was an error.
     cmp eax, 0x534d4150 ; "SMAP" should be returned into eax.
     jne address_map_error ; Jump if not equal.
+    add di, 20 ; Advance memory buffer.
     test ebx, ebx
     jnz subsequent_block ; Jump if not zero, as the list continues.
     ; Zero indicates the end of the list.
 
+; Store end of memory map.
+mov [end_mem_map], di
+
 mov bx, MEM_MAP_OK_STR
 call a16_print_str
-call a16_newline_cursor
+
+mov bx, MEM_MAP_ADDRESS_STR
+call a16_print_str
+
+mov bx, mem_map
+mov cx, 2 ; Size.
+call a16_print_hex
+mov bx, NEWLINE_STR
+call a16_print_str
+
+mov bx, MEM_MAP_TABLE_STR
+call a16_print_str
+
+; Print memory map.
+mov bx, [mem_map]
+mov ax, [end_mem_map]
+.top_print_loop:
+    ; bx is already set to the start of the memory to be printed.
+    mov cx, 8 ; Size.
+    call a16_print_hex
+
+    push bx
+    mov bx, DELIM_STR
+    call a16_print_str
+    pop bx
+
+    add bx, 8 ; Address to start of memmory.
+    mov cx, 8 ; Size.
+    call a16_print_hex
+
+    push bx
+    mov bx, DELIM_STR
+    call a16_print_str
+    pop bx
+
+    add bx, 8 ; Address to start of memmory.
+    mov cx, 4 ; Size.
+    call a16_print_hex
+    ; Prepare for next loop.
+    add bx, 4
+
+    push bx
+    mov bx, NEWLINE_STR
+    call a16_print_str
+    pop bx
+
+    cmp bx, ax
+    jne .top_print_loop
+    ; If equal then at the address immediately after the end of the mem map.
+
+mov bx, [mem_map]
+mov ax, [end_mem_map]
 
 address_map_error:
 read_error:
@@ -185,35 +235,46 @@ no_cpuid_support:
 
 mov bx, BL2_ERR_STR
 call a16_print_str
-call a16_newline_cursor
 
 stop:
     hlt
     jmp stop ; Jump forever.
 
 IN_LOADER_STR:
-    db "In stage 2 bootloader OK", 0
+    db `In stage 2 bootloader OK\r\n\0`
 
 CPUID_SUPPORT_STR:
-    db "CPUID support OK", 0
+    db `CPUID support OK\r\n\0`
 
 MAN_ID_STR:
-    db "CPU Manufacturer Id: ", 0
+    db `CPU Manufacturer Id: \0`
 
 LONG_MODE_STR:
-    db "Long mode support OK", 0
+    db `Long mode support OK\r\n\0`
 
 GiB_PAGES_STR:
-    db "GiB pages support OK", 0
+    db `GiB pages support OK\r\n\0`
 
 BL2_ERR_STR:
-    db "Stage 2 bootloader ERROR", 0
+    db `Stage 2 bootloader ERROR\r\n\0`
 
 READ_KERNEL_OK_STR:
-    db "Read kernel OK", 0
+    db `Read kernel OK\r\n\0`
 
 MEM_MAP_OK_STR:
-    db "Memory map read OK", 0
+    db `Memory map read OK\r\n\0`
+
+MEM_MAP_ADDRESS_STR:
+    db `Memory map address: \0`
+
+MEM_MAP_TABLE_STR:
+    db `Address^Size^Type\r\n\0`
+
+DELIM_STR:
+    db `^\0`
+
+NEWLINE_STR:
+    db `\r\n\0`
 
 drive_index:
     db 0
@@ -225,5 +286,12 @@ man_id:
 DAP:
     times 16 db 0
 
+; Stores the address to the start of where the memory map will be saved.
+mem_map:
+    dw 0x9000
+; Stored the address immediately after then end of the memory map.
+end_mem_map:
+    dw 0
 
-%include "lib16.asm" ; Include the 16-bit library.
+%include "lib16_1.asm" ; Include 16-bit library 1.
+%include "lib16_2.asm" ; Include 16-bit library 2.

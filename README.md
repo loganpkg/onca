@@ -24,6 +24,9 @@ for coming up with the name.
 Special thanks to the x-BIT Development Udemy course and Nick Blundell's book (listed below).
 I highly recommend these excellent resources.
 
+This operating system uses sloth version control and was written using the
+spot text editor (included in the toucan C development environment).
+
 References
 ----------
 
@@ -90,22 +93,14 @@ Disable UEFI.
 F10 -> Save.
 ```
 
-Building the bootloader
------------------------
+Building
+--------
 ```
-$ nasm bootloader.asm -f bin -o bootloader.bin
+$ make
 ```
 
-Physcially booting
+Physically booting
 ------------------
 ```
 $ dmesg
-$ doas dd if=bootloader.bin of=/dev/rsd4c
-```
-
-Vitually booting
-----------------
-```
-$ qemu-system-x86_64 -nographic bootloader.bin
-^a x
-```
+$ doas dd if=boot.img of=/dev/rsdXc

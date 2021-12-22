@@ -49,19 +49,15 @@ int 0x10
 
 mov bx, STAGE1_BL_STR
 call a16_print_str
-call a16_newline_cursor
 
 mov bx, WELCOME_STR
 call a16_print_str
-call a16_newline_cursor
 
 mov bx, COPYRIGHT_STR
 call a16_print_str
-call a16_newline_cursor
 
 mov bx, LICENSE_STR
 call a16_print_str
-call a16_newline_cursor
 
 ; Store drive index.
 mov [drive_index], dl
@@ -77,7 +73,6 @@ jne no_int_13h_support ; Jump if not equal.
 
 mov bx, INT_13H_SUPPORT_STR
 call a16_print_str
-call a16_newline_cursor
 
 ; Load stage 2 bootloader file, which is the 5 sectors commencing from the
 ; 2nd sector on disk.
@@ -99,7 +94,6 @@ jc read_error ; The read failed.
 
 mov bx, READ_LOADER_OK_STR
 call a16_print_str
-call a16_newline_cursor
 
 ; Set again in case dl has been used.
 mov dl, [drive_index]
@@ -110,35 +104,38 @@ no_int_13h_support:
 
 mov bx, BL1_ERR_STR
 call a16_print_str
-call a16_newline_cursor
 
 stop:
     hlt
     jmp stop ; Jump forever.
 
-%include "lib16.asm" ; Include the 16-bit library.
+%include "lib16_1.asm" ; Include 16-bit library 1.
 
 ; Note that the strings are NULL (zero) terminated.
+; Backticks allow escape sequences to be interpreted by nasm.
+; \r moves the cursor to the start of the current line.
+; \n moves the cursor directly down one line.
+; Hence, both are needed to make a newline.
 STAGE1_BL_STR:
-    db "In stage 1 bootloader", 0
+    db `In stage 1 bootloader\r\n\0`
 
 WELCOME_STR:
-    db "Welcome to CebolaOS", 0
+    db `Welcome to CebolaOS\r\n\0`
 
 COPYRIGHT_STR:
-    db "Copyright (c) 2021 Logan Ryan McLintock", 0
+    db `Copyright (c) 2021 Logan Ryan McLintock\r\n\0`
 
 LICENSE_STR:
-    db "Released under the ISC license", 0
+    db `Released under the ISC license\r\n\0`
 
 INT_13H_SUPPORT_STR:
-    db "INT 13h extension functions OK", 0
+    db `INT 13h extension functions OK\r\n\0`
 
 READ_LOADER_OK_STR:
-    db "Read of stage 2 bootloader OK", 0
+    db `Read of stage 2 bootloader OK\r\n\0`
 
 BL1_ERR_STR:
-    db "Stage 1 bootloader ERROR", 0
+    db `Stage 1 bootloader ERROR\r\n\0`
 
 drive_index:
     db 0
