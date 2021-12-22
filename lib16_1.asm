@@ -26,7 +26,7 @@ a16_print_str:
     mov ah, 0x0e ; Teletype output.
     .start:
     mov al, [bx] ; Prepare the value stored at bx for printing.
-    Check for the zero termination of string.
+    ; Check for the zero termination of string.
     test al, al ; AND without storing the result.
     jz .end
     int 0x10 ; Interrupt. This will cause the print to occur on the screen.
