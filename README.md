@@ -77,6 +77,9 @@ References
 * 15.1. INT 15H, E820H - Query System Address Map, ACPI Specification 6.4,
   https://uefi.org/specs/ACPI/6.4/15_System_Address_Map_Interfaces/int-15h-e820h---query-system-address-map.html
 
+* A20 line, Wikipedia, https://en.wikipedia.org/wiki/A20_line
+
+
 BIOS settings
 -------------
 

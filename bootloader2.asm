@@ -223,9 +223,46 @@ mov ax, [end_mem_map]
     jne .top_print_loop
     ; If equal then at the address immediately after the end of the mem map.
 
-mov bx, [mem_map]
-mov ax, [end_mem_map]
+; Check if address line 20 is enabled.
+; Write a random value to address 0x7c00 (the address where the stage 1
+; bootloader was copied to, as this is no longer being used).
+xor ax, ax ; Zero.
+mov ds, ax ; Zero data segment register.
+; Copy random value. Need to specify the size of the memory (a word = 2 bytes).
+mov word[ds:0x7c00], 0x4e14 ; Random value decimal 19988.
+; The address 0x7c00 with the bit index 20 set is address 0x107c00.
+; 1 << 20 + 0x7c00 = 0x107c00.
+; To create this address using the 16 bit (2 byte) register values, a non-zero
+; segment register value must be used. To make the address big, use the maximum
+; segment value of 0xffff. Then the required offset will be
+; 0x107c00 - 0xffff * 0x10 = 0x7c10
+; And to check
+; 0xffff * 0x10 + 0x7c10 = 0x107c00
+; Use the extra segment for the big address (as ds is already being used).
+mov ax, 0xffff
+mov es, ax
+; See if this big address contains the random number
+cmp word[es:0x7c10], 0x4e14
+; Jump if not equal. This means that the big address did not upper bound
+; truncate, and A20 works fine.
+jne .a20_ok
+; Else, they are equal. This could be a coincidence. Try another random number.
+; (The value stored at the real big address will not change).
+mov word[ds:0x7c00], 0xba30 ; Copy random value decimal 47664.
+; Compare the value stored at the big address against the random number.
+cmp word[es:0x7c10], 0xba30
+; If equal, the big address was upper bound truncated to be the small address,
+; and A20 is disabled.
+je a20_disabled
 
+.a20_ok:
+; Clear es register again.
+xor ax, ax
+mov es, ax
+mov bx, A20_OK_STR
+call a16_print_str
+
+a20_disabled:
 address_map_error:
 read_error:
 no_GiB_pages:
@@ -269,6 +306,9 @@ MEM_MAP_ADDRESS_STR:
 
 MEM_MAP_TABLE_STR:
     db `Address^Size^Type\r\n\0`
+
+A20_OK_STR:
+    db `Address line 20 OK\r\n\0`
 
 DELIM_STR:
     db `^\0`
