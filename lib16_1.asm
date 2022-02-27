@@ -23,15 +23,29 @@ a16_print_str:
     ; Function that prints 0 terminated string.
     ; String address is stored in register bx.
     pusha ; Backup registers.
-    mov ah, 0x0e ; Teletype output.
+    ; Print directly to video memory, which starts at 0xb8000.
+    ; This address is too large for 16-bits, so need to need to use a segment
+    ; register. Segment registers cannot be set directly.
+    mov ax, 0xb800 ; 16-bits
+    mov es, ax ; Set the Extra Segment register.
+    ; Zero the Destination Index register.
+    ; Address es:di = 0xb800 * 0x10 + 0 = 0xb8000
+    xor di, di
     .start:
-    mov al, [bx] ; Prepare the value stored at bx for printing.
+    ; Prepare the value stored at bx for printing.
+    mov al, [bx] ;
+
     ; Check for the zero termination of string.
     test al, al ; AND without storing the result.
     jz .end
-    int 0x10 ; Interrupt. This will cause the print to occur on the screen.
+
+    mov [es:di], al ; Move ch to video memmory.
+    inc di
+    mov byte[es:di], 0x07 ; Black background, light grey foreground.
+    inc di
     inc bx
-    jmp .start ; Jump to the start of the loop.
+    jmp .start
+
     .end: ; Local label. End of loop.
     popa ; Restore registers.
     ret ; Return to after the call.

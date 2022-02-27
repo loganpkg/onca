@@ -79,6 +79,7 @@ References
 
 * A20 line, Wikipedia, https://en.wikipedia.org/wiki/A20_line
 
+* x86 Registers, https://www.eecg.utoronto.ca/~amza/www.mindsec.com/files/x86regs.html
 
 BIOS settings
 -------------
