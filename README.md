@@ -81,6 +81,11 @@ References
 
 * x86 Registers, https://www.eecg.utoronto.ca/~amza/www.mindsec.com/files/x86regs.html
 
+* Global Descriptor Table, Wikipedia, https://en.wikipedia.org/wiki/Global_Descriptor_Table
+
+* Global Descriptor Table, OSDev Wiki, https://wiki.osdev.org/Global_Descriptor_Table
+
+
 BIOS settings
 -------------
 

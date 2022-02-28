@@ -293,7 +293,7 @@ GiB_PAGES_STR:
     db `GiB pages support OK\r\n\0`
 
 BL2_ERR_STR:
-    db `Stage 2 bootloader ERROR ......................................................................................................\0`
+    db `Stage 2 bootloader ERROR\r\n\0`
 
 READ_KERNEL_OK_STR:
     db `Read kernel OK\r\n\0`
