@@ -85,6 +85,19 @@ References
 
 * Global Descriptor Table, OSDev Wiki, https://wiki.osdev.org/Global_Descriptor_Table
 
+* LGDT/LIDT Load Global/Interrupt Descriptor Table Register,
+  https://www.felixcloutier.com/x86/lgdt:lidt
+
+* Protected Mode, OSDev Wiki, https://wiki.osdev.org/Protected_Mode
+
+* Protected mode, Wikipedia, https://en.wikipedia.org/wiki/Protected_mode
+
+* Prefetch input queue, Wikipedia,
+  https://en.wikipedia.org/wiki/Prefetch_input_queue
+
+* Clear Interrupt Flag (cli), IA-32 Assembly Language Reference Manual,
+  https://docs.oracle.com/cd/E19455-01/806-3773/instructionset-15/index.html
+
 
 BIOS settings
 -------------

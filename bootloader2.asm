@@ -1,5 +1,5 @@
 ;
-; Copyright (c) 2021 Logan Ryan McLintock
+; Copyright (c) 2021, 2022 Logan Ryan McLintock
 ;
 ; Permission to use, copy, modify, and distribute this software for any
 ; purpose with or without fee is hereby granted, provided that the above
@@ -16,7 +16,7 @@
 
 ; bootloader2.asm -- Stage 2 bootloader for CebolaOS.
 ;                    This is loaded by the stage 1 bootloader.
-;                    This boots the kernel.
+;                    This boots the kernel and enters 32-bit protected mode.
 
 ; 16-bit 8086 BIOS Assembly in real mode.
 [bits 16]
@@ -261,6 +261,124 @@ xor ax, ax
 mov es, ax
 mov bx, A20_OK_STR
 call a16_print_str
+
+cli ; Clear interrupt flag.
+lgdt [gdt32pm_ptr] ; Load the global descriptor table.
+lidt [idt32pm_ptr] ; Load the interrupt descriptor table.
+
+mov eax, cr0 ; Copy Control Register 0 (cr0).
+; Set the lowest bit to 1 which will enable protected mode when applied.
+or al, 1
+; Apply modified copy back to control register 0 to enable protected mode.
+mov cr0, eax
+
+; Perform a far jump to clear the prefetch input queue (the fetching of opcodes
+; from memory before they are needed). This also sets the Code Segment (CS)
+; register to the code segment descriptor in the global descriptor table
+; (the second entry at an index of 8 bytes).
+jmp 8:pm_entry
+
+[bits 32]
+pm_entry:
+; Index into the data segment descriptor of the global descriptor table.
+mov ax, 16 ; 3rd entry in GDT at byte 16.
+; Set these registers to the data segment descriptor index
+; (they cannot be set directly).
+mov ds, ax ; Data segment register.
+mov ss, ax ; Stack segment register.
+mov es, ax ; Extra segment register.
+; Set the Extended Stack Pointer (esp) to where the MBR is loaded into memory,
+; as the stack grows downwards and the stack is below the MBR.
+mov esp, 0x7c00
+
+; Update status in printed message on the screen (see bootloader 1).
+mov byte[0xb8002], 'O'
+mov byte[0xb8004], 'K'
+
+stop2:
+    hlt
+    jmp stop2 ; Jump forever.
+
+; Global Descriptor Table (GDT) for entering 32-bit protected mode.
+; https://wiki.osdev.org/Global_Descriptor_Table
+; https://en.wikipedia.org/wiki/Global_Descriptor_Table
+
+gdt32pm: ; Global descriptor table for 32-bit protected mode.
+; The first segment descriptor must be all zero.
+dq 0 ; 8 bytes.
+
+; Segment descriptor: Used for the code segment
+; ---------------------------------------------
+
+dw 0xffff ; Segment limit (first 2 bytes): Choose the maximum value.
+
+; Base address (first 3 bytes): Set to zero.
+dw 0 ; Two bytes.
+db 0 ; One byte.
+
+; Access byte:
+;  1 = Present bit: Set to one to indicate that this is a valid segment.
+; 00 = Descriptor privilege level field (2 bits): Set to zero (to mean ring zero).
+;  1 = Descriptor type (1 bit): Set to 1 meaning it is a code or data segment.
+;  1 = Executable bit: Set to 1 to make a code segment (executable).
+;  0 = Conforming bit (for code): Set to 0 (non-conforming).
+;  1 = Readable bit (for code): Set to 1 so that read access is allowed.
+;  0 = Accessed bit: Set to zero.
+db 10011010b
+
+; Flags
+; 1 = Granularity flag (1 bit): Set to 1 for 4 KiB blocks.
+;     Segment limit (20 bits) is multipled by this to give the address space.
+;     Address space = (0xfffff + 1) * 4 * 2^10
+;                   = 0x100000 * 0x1000
+;                   = 0x100000000
+;                   = 4294967296
+;                   = 4 * 2^30
+;                   = 4 GiB
+; 1 = Size flag (1 bit): Set to one 1 meaning 32-bits.
+; 0 = Long-mode code flag (1 bit): Set to 0 meaning not in long-mode yet.
+; 0 = Reserved bit (1 bit).
+
+; Segment limit (continued... upper 4 bits to make a total of 20 bits).
+; Set to the maximum, which is 1111 in binary.
+; Putting the flags and the upper part of the segment limit together gives:
+db 11001111b
+
+; Base address (continued.... upper byte)
+db 0 ; Set to 0. All pieces of the base address are 0, making 0 overall.
+
+; Segment descriptor: Used for the data segment
+; ---------------------------------------------
+; This is almost the same as the code segment.
+dw 0xffff
+dw 0
+db 0
+
+; Access byte:
+;  1
+; 00
+;  1
+;  0 = Executable bit: Set to 0 to make a data segment (non-executable).
+;  0 = Direction bit (for data): Set to 0 to make the segment grow upwards.
+;  1 = Writable bit (for data): Set to 1 so that write access is allowed.
+;  0
+db 10010010b
+db 11001111b
+db 0
+
+gdt32pm_size: equ $ - gdt32pm ; GDT size.
+
+gdt32pm_ptr: ; In 32-bit mode 6 bytes is used.
+; Since little-endian, the size component appears first.
+dw gdt32pm_size ; 2 bytes.
+dd gdt32pm ; 4 bytes.
+
+idt32pm_ptr:
+; Interrupt Descriptor Table (IDT). An empty table is used to disable interupts
+; while entering 32-bit protected mode.
+dw 0 ; Size.
+dd 0 ; Pointer to table (there is no table in this case).
+
 
 a20_disabled:
 address_map_error:

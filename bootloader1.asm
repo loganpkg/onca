@@ -47,6 +47,9 @@ mov ah, 0 ; Set video mode.
 mov al, 0x03 ; Text mode 80 by 25.
 int 0x10
 
+mov bx, PM_LM_STATUS_STR
+call a16_print_str
+
 mov bx, STAGE1_BL_STR
 call a16_print_str
 
@@ -116,6 +119,16 @@ stop:
 ; \r moves the cursor to the start of the current line.
 ; \n moves the cursor directly down one line.
 ; Hence, both are needed to make a newline.
+
+; Protected mode and long mode status.
+PM_LM_STATUS_STR:
+    db `[NO] Protected mode, [NO] Long mode\r\n\0`
+;        ^                    ^
+;        |                    |
+;        |                    22, 23 => 44, 46
+;        1, 2, which compensating for the attribute bits will be indices
+;        2 and 4 in the video memory.
+
 STAGE1_BL_STR:
     db `In stage 1 bootloader\r\n\0`
 
