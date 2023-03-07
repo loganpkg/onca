@@ -1,0 +1,7 @@
+USER=logan
+NAME=Logan McLintock
+EMAIL=loganpkg@gmail.com
+PROJECT_NAME=onca
+PROJECT_DESC=onca is an operating system
+GIT_REMOTE=git@github.com:loganpkg/onca.git
+GIT_REMOTE=git@bitbucket.org:logancode/onca.git

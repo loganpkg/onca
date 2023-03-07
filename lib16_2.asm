@@ -14,7 +14,7 @@
 ; OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 ;
 
-; lib16_2.asm -- 16-bit 8086 BIOS Assembly library 2 for CebolaOS.
+; lib16_2.asm -- 16-bit 8086 BIOS Assembly library 2 for onca.
 ; This is used in stage 2 bootloader in 16-bit real mode.
 
 [bits 16]

@@ -14,7 +14,7 @@
 ; OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 ;
 
-; bootloader1.asm: Stage 1 bootloader for CebolaOS.
+; bootloader1.asm: Stage 1 bootloader for onca.
 ;                  This primarily loads the stage 2 bootloader.
 
 ; 16-bit 8086 BIOS Assembly in real mode.
@@ -133,7 +133,7 @@ STAGE1_BL_STR:
     db `In stage 1 bootloader\r\n\0`
 
 WELCOME_STR:
-    db `Welcome to CebolaOS\r\n\0`
+    db `Welcome to onca\r\n\0`
 
 COPYRIGHT_STR:
     db `Copyright (c) 2021 Logan Ryan McLintock\r\n\0`

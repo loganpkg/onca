@@ -14,7 +14,7 @@
 ; OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 ;
 
-; mbr_partition_table.asm: Master Boot Record partition table for CebolaOS.
+; mbr_partition_table.asm: Master Boot Record partition table for onca.
 
 ;
 ;       Partition Entry

@@ -14,7 +14,7 @@
 ; OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 ;
 
-; bootloader2.asm -- Stage 2 bootloader for CebolaOS.
+; bootloader2.asm -- Stage 2 bootloader for onca.
 ;                    This is loaded by the stage 1 bootloader.
 ;                    This boots the kernel and enters 32-bit protected mode.
 

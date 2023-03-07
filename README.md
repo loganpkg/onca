@@ -14,12 +14,10 @@ ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 -->
-CebolaOS
-========
+onca
+====
 
-CebolaOS is an operating system, named so due to the layers of
-software that an operating system has. Special thanks to my wife Juliana
-for coming up with the name.
+onca is an operating system.
 
 Special thanks to the x-BIT Development Udemy course and Nick Blundell's book (listed below).
 I highly recommend these excellent resources.
